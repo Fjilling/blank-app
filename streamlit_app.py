@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import gdown
 import re
@@ -57,3 +58,17 @@ if user_input:
     plt.title("Forecast 12 meses")
 
     st.pyplot(fig)
+
+st.title("Dashboard Tesis")
+
+powerbi_iframe = """
+<iframe title="Dashboard Tesis"
+        width="100%"
+        height="600"
+        src="https://app.powerbi.com/view?r=eyJrIjoiNTQyMDExN2UtZjEyYi00YzhkLTk1ZGUtNTc1ODcwMTA3MGRjIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9"
+        frameborder="0"
+        allowFullScreen="true">
+</iframe>
+"""
+
+components.html(powerbi_iframe, height=650, scrolling=True)
