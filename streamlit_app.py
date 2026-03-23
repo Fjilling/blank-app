@@ -11,12 +11,12 @@ import matplotlib.pyplot as plt
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
-    page_title='Pronóstico',
-        page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
+    page_title='Predicción de demanda',
+        page_icon=':📈:', # This is an emoji shortcode. Could be a URL too.
         )
         #st.title("Forecasting Mensual de Ventas")
 
-st.title("🎈 Analítica Predictiva")
+st.title("Predicción de demanda para próximas 8 semanas")
 st.write(
     "para colocar cualquier otro html..."
 )
