@@ -37,7 +37,7 @@ def load_data():
 df_hist, df_pred = load_data()
 
 # --- 2. ESTRUCTURA DE PESTAÑAS ---
-tab1, tab2 = st.tabs(["PRONÓSTICO", "DASHBOARD HISTÓRICO (PBI)"])
+tab1, tab2 = st.tabs(["PRONÓSTICO", "DASHBOARD ESTRATÉGICO"])
 
 with tab1:
     st.header("SISTEMA DE PROYECCIÓN DE DEMANDA")
@@ -66,29 +66,31 @@ with tab1:
     st.subheader("3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
 
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
-    cantidades = [df_pred[sku].sum() for sku in skus]
+    # Redondeamos de una vez para que no salgan tantos decimales
+    cantidades = [round(df_pred[sku].sum(), 2) for sku in skus]
 
     df_top5_tabla = pd.DataFrame({
         'SKU ID': skus,
         'Cantidad Total Proyectada': cantidades
     })
 
-    # Aplicamos estilo para centrar el texto en la columna de cantidades
-    # Nota: subset selecciona la columna, y .set_properties aplica el CSS
-    styled_df = df_top5_tabla.style.set_properties(
-        **{'text-align': 'center'}, 
-        subset=['Cantidad Total Proyectada']
-    ).set_table_styles(
-        [{'selector': 'th', 'props': [('text-align', 'center')]}] # También centra el encabezado
-    )
-
-    # Mostramos usando st.dataframe para poder ocultar el índice
+    # Usamos column_config para forzar la alineación al centro
     st.dataframe(
-        styled_df, 
-        use_container_width=True, 
-        hide_index=True
+        df_top5_tabla,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "SKU ID": st.column_config.TextColumn(
+                "SKU ID",
+                help="Código identificador del producto",
+            ),
+            "Cantidad Total Proyectada": st.column_config.NumberColumn(
+                "Cantidad Total Proyectada",
+                format="%.2f", # Esto asegura 2 decimales
+                alignment="center", # <--- ESTO fuerzo el centrado
+            )
+        }
     )
-
     # --- SECCIÓN 4: MÉTRICAS DE VALIDACIÓN ---
     st.markdown("---")
     st.subheader("4. MÉTRICAS DE VALIDACIÓN DEL MODELO (Backtesting)")
@@ -108,7 +110,6 @@ with tab1:
 
 with tab2:
     # --- SECCIÓN: POWER BI ---
-    st.subheader("Análisis Estratégico - Power BI")
     
     powerbi_iframe = """
     <iframe title="Dashboard Tesis"
