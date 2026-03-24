@@ -109,15 +109,16 @@ with tab1:
         st.caption("Datos todavía no disponibles")
 
 with tab2:
-    # --- SECCIÓN: POWER BI ---
-    
+    # Nuevo código embed actualizado
     powerbi_iframe = """
-    <iframe title="Dashboard Tesis"
-            width="100%"
-            height="600"
-            src="https://app.powerbi.com/view?r=eyJrIjoiNTQyMDExN2UtZjEyYi00YzhkLTk1ZGUtNTc1ODcwMTA3MGRjIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9"
-            frameborder="0"
+    <iframe title="Dashboard Tesis" 
+            width="100%" 
+            height="373.5" 
+            src="https://app.powerbi.com/view?r=eyJrIjoiNTQyMDExN2UtZjEyYi00YzhkLTk1ZGUtNTc1ODcwMTA3MGRjIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9" 
+            frameborder="0" 
             allowFullScreen="true">
     </iframe>
     """
+    
+    # Ajustamos el height de components.html para que coincida con el nuevo tamaño o un poco más
     components.html(powerbi_iframe, height=650, scrolling=True)
