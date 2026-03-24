@@ -66,28 +66,28 @@ with tab1:
     st.subheader("3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
 
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
-    # Redondeamos de una vez para que no salgan tantos decimales
-    cantidades = [round(df_pred[sku].sum(), 2) for sku in skus]
+    # Formateamos los números como texto con 2 decimales y separador de miles
+    cantidades = [f"{df_pred[sku].sum():,.2f}" for sku in skus]
 
     df_top5_tabla = pd.DataFrame({
         'SKU ID': skus,
         'Cantidad Total Proyectada': cantidades
     })
 
-    # Usamos column_config para forzar la alineación al centro
+    # Al ser ahora "texto" (por el formato), Streamlit permite centrarlo más fácilmente
     st.dataframe(
         df_top5_tabla,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "SKU ID": st.column_config.TextColumn(
+            "SKU ID": st.column_config.Column(
                 "SKU ID",
-                help="Código identificador del producto",
+                width="medium",
             ),
-            "Cantidad Total Proyectada": st.column_config.NumberColumn(
+            "Cantidad Total Proyectada": st.column_config.Column(
                 "Cantidad Total Proyectada",
-                format="%.2f", # Esto asegura 2 decimales
-                alignment="center", # <--- ESTO fuerzo el centrado
+                width="medium",
+                help="Suma total proyectada para este SKU",
             )
         }
     )
