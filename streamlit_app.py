@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 import os
 
 # Configuración de la página
-st.set_page_config(page_title="Sistema de Proyección de Demanda", layout="wide")
+st.set_page_config(
+    page_title='Sistema de Proyección de Demanda',
+        page_icon=':📈:', # This is an emoji shortcode. Could be a URL too.
+        )
+
 
 # --- 1. DESCARGA Y CARGA DE DATOS ---
 
@@ -36,12 +40,12 @@ df_hist, df_pred = load_data()
 tab1, tab2 = st.tabs(["PRONÓSTICO", "DASHBOARD HISTÓRICO (PBI)"])
 
 with tab1:
-    st.header("SISTEMA DE PROYECCIÓN DE DEMANDA v3.0")
+    st.header("SISTEMA DE PROYECCIÓN DE DEMANDA")
 
     # --- SECCIÓN 1: CONFIGURACIÓN DEL HORIZONTE ---
     fecha_max = df_pred['Semana'].max()
     st.subheader("1. CONFIGURACIÓN DEL HORIZONTE")
-    st.info(f"Fecha final de predicción: {fecha_max.strftime('%d/%m/%Y')}")
+    st.info(f"Fecha final de predicción: {fecha_max.strftime('%d de %B %Y')}")
 
     # --- SECCIÓN 2: SERIE TEMPORAL ---
     st.subheader("2. SERIE TEMPORAL: DEMANDA PROYECTADA")
@@ -50,7 +54,7 @@ with tab1:
     # Histórico (Fuente 1)
     ax.plot(df_hist['Semana'], df_hist['Weekly_Sales'], label='Demanda Real (Histórico)', color='#1f77b4')
     # Predicción (Fuente 2)
-    ax.plot(df_pred['Semana'], df_pred['TOP5_Total'], label='Predicción Futura', color='#ff7f0e', linestyle='--')
+    ax.plot(df_pred['Semana'], df_pred['TOP5_Total'], label='Predicción Futura', color='#ff7f0e')
     
     ax.set_xlabel("Semana")
     ax.set_ylabel("Unidades")
@@ -58,20 +62,32 @@ with tab1:
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    # --- SECCIÓN 3: TOP 5 SKUs ---
+    # 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA
     st.subheader("3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
-    
+
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
-    
-    # Calcular sumas totales para cada SKU
     cantidades = [df_pred[sku].sum() for sku in skus]
-    
+
     df_top5_tabla = pd.DataFrame({
         'SKU ID': skus,
         'Cantidad Total Proyectada': cantidades
     })
-    
-    st.table(df_top5_tabla)
+
+    # Aplicamos estilo para centrar el texto en la columna de cantidades
+    # Nota: subset selecciona la columna, y .set_properties aplica el CSS
+    styled_df = df_top5_tabla.style.set_properties(
+        **{'text-align': 'center'}, 
+        subset=['Cantidad Total Proyectada']
+    ).set_table_styles(
+        [{'selector': 'th', 'props': [('text-align', 'center')]}] # También centra el encabezado
+    )
+
+    # Mostramos usando st.dataframe para poder ocultar el índice
+    st.dataframe(
+        styled_df, 
+        use_container_width=True, 
+        hide_index=True
+    )
 
     # --- SECCIÓN 4: MÉTRICAS DE VALIDACIÓN ---
     st.markdown("---")
@@ -84,7 +100,7 @@ with tab1:
     
     with col1:
         st.metric(label="CONFIANZA DEL PRONÓSTICO", value=f"{confianza_promedio:.2%}")
-        st.caption("Basado en el promedio de WAPE TopDown")
+        st.caption("Basado en el WAPE de la predicción")
         
     with col2:
         st.metric(label="SESGO DEL PRONÓSTICO", value="NA")
