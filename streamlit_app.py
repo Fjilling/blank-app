@@ -2,73 +2,105 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import gdown
-import re
-import os
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import matplotlib.pyplot as plt
+import os
 
+# Configuración de la página
+st.set_page_config(page_title="Sistema de Proyección de Demanda", layout="wide")
 
+# --- 1. DESCARGA Y CARGA DE DATOS ---
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='Predicción de demanda',
-        page_icon=':📈:', # This is an emoji shortcode. Could be a URL too.
-        )
-        #st.title("Forecasting Mensual de Ventas")
+@st.cache_data
+def load_data():
+    # Fuente 1: Histórico de ventas
+    file1_id = '1hyEqmcdNLdfZ6n_XKQkkWqNo3EooUh35'
+    path1 = 'df_TOP5.xlsx'
+    if not os.path.exists(path1):
+        gdown.download(id=file1_id, output=path1, quiet=True)
+    df_hist = pd.read_excel(path1)
+    df_hist['Semana'] = pd.to_datetime(df_hist['Semana'])
 
-st.title("Predicción de demanda para próximas 8 semanas")
-st.write(
-    "para colocar cualquier otro html..."
-)
+    # Fuente 2: Predicciones
+    file2_id = '1lYm1Qau0vt6K9et1mogijG6Lq8QDSP2H'
+    path2 = 'df_predict.xlsx'
+    if not os.path.exists(path2):
+        gdown.download(id=file2_id, output=path2, quiet=True)
+    df_pred = pd.read_excel(path2)
+    df_pred['Semana'] = pd.to_datetime(df_pred['Semana'])
+    
+    return df_hist, df_pred
 
+df_hist, df_pred = load_data()
 
-# Input usuario
-user_input = st.text_input("Pegue el LINK o FILE_ID de Google Drive")
+# --- 2. ESTRUCTURA DE PESTAÑAS ---
+tab1, tab2 = st.tabs(["PRONÓSTICO", "DASHBOARD HISTÓRICO (PBI)"])
 
-if user_input:
+with tab1:
+    st.header("SISTEMA DE PROYECCIÓN DE DEMANDA v3.0")
 
-    # Extraer file_id
-    match = re.search(r"/d/([a-zA-Z0-9_-]+)", user_input)
-    file_id = match.group(1) if match else user_input
+    # --- SECCIÓN 1: CONFIGURACIÓN DEL HORIZONTE ---
+    fecha_max = df_pred['Semana'].max()
+    st.subheader("1. CONFIGURACIÓN DEL HORIZONTE")
+    st.info(f"Fecha final de predicción: {fecha_max.strftime('%d/%m/%Y')}")
 
-    url = f"https://drive.google.com/uc?id={file_id}"
-    file_path = "dataset.csv"
-
-    if not os.path.exists(file_path):
-        gdown.download(url, file_path, quiet=True)
-
-    df = pd.read_csv(file_path)
-    df['Fecha'] = pd.to_datetime(df['Fecha'])
-
-    df_monthly = df.set_index('Fecha').resample('ME')['Total'].sum()
-
-    model = ExponentialSmoothing(
-        df_monthly,
-        trend='add',
-        seasonal='add',
-        seasonal_periods=12
-    )
-
-    fit = model.fit()
-    forecast = fit.forecast(12)
-
-    fig = plt.figure()
-    plt.plot(df_monthly)
-    plt.plot(forecast)
-    plt.title("Forecast 12 meses")
-
+    # --- SECCIÓN 2: SERIE TEMPORAL ---
+    st.subheader("2. SERIE TEMPORAL: DEMANDA PROYECTADA")
+    
+    fig, ax = plt.subplots(figsize=(10, 4))
+    # Histórico (Fuente 1)
+    ax.plot(df_hist['Semana'], df_hist['Weekly_Sales'], label='Demanda Real (Histórico)', color='#1f77b4')
+    # Predicción (Fuente 2)
+    ax.plot(df_pred['Semana'], df_pred['TOP5_Total'], label='Predicción Futura', color='#ff7f0e', linestyle='--')
+    
+    ax.set_xlabel("Semana")
+    ax.set_ylabel("Unidades")
+    ax.legend()
+    plt.xticks(rotation=45)
     st.pyplot(fig)
 
-st.title("Dashboard Tesis")
+    # --- SECCIÓN 3: TOP 5 SKUs ---
+    st.subheader("3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
+    
+    skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
+    
+    # Calcular sumas totales para cada SKU
+    cantidades = [df_pred[sku].sum() for sku in skus]
+    
+    df_top5_tabla = pd.DataFrame({
+        'SKU ID': skus,
+        'Cantidad Total Proyectada': cantidades
+    })
+    
+    st.table(df_top5_tabla)
 
-powerbi_iframe = """
-<iframe title="Dashboard Tesis"
-        width="100%"
-        height="600"
-        src="https://app.powerbi.com/view?r=eyJrIjoiNTQyMDExN2UtZjEyYi00YzhkLTk1ZGUtNTc1ODcwMTA3MGRjIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9"
-        frameborder="0"
-        allowFullScreen="true">
-</iframe>
-"""
+    # --- SECCIÓN 4: MÉTRICAS DE VALIDACIÓN ---
+    st.markdown("---")
+    st.subheader("4. MÉTRICAS DE VALIDACIÓN DEL MODELO (Backtesting)")
+    
+    col1, col2 = st.columns(2)
+    
+    # Confianza: Promedio de WAPE_TopDown_Total
+    confianza_promedio = df_pred['WAPE_TopDown_Total'].mean()
+    
+    with col1:
+        st.metric(label="CONFIANZA DEL PRONÓSTICO", value=f"{confianza_promedio:.2%}")
+        st.caption("Basado en el promedio de WAPE TopDown")
+        
+    with col2:
+        st.metric(label="SESGO DEL PRONÓSTICO", value="NA")
+        st.caption("Datos todavía no disponibles")
 
-components.html(powerbi_iframe, height=650, scrolling=True)
+with tab2:
+    # --- SECCIÓN: POWER BI ---
+    st.subheader("Análisis Estratégico - Power BI")
+    
+    powerbi_iframe = """
+    <iframe title="Dashboard Tesis"
+            width="100%"
+            height="600"
+            src="https://app.powerbi.com/view?r=eyJrIjoiNTQyMDExN2UtZjEyYi00YzhkLTk1ZGUtNTc1ODcwMTA3MGRjIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9"
+            frameborder="0"
+            allowFullScreen="true">
+    </iframe>
+    """
+    components.html(powerbi_iframe, height=650, scrolling=True)
