@@ -89,7 +89,7 @@ with tab1:
 
     # 1. Obtenemos las sumas directamente del DataFrame que ya procesamos (df_predict)
     # Como ya aplicamos la transferencia de residuo, estos ya son enteros.
-    sumas_finales = [df_predict[sku].sum() for sku in skus]
+    sumas_finales = [df_pred[sku].sum() for sku in skus]
 
     # 2. Construcción del DataFrame para Visualización
     df_top5_resumen = pd.DataFrame({
