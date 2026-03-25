@@ -86,49 +86,42 @@ with tab1:
 
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
 
-    # 1. Calculamos los valores flotantes reales (la suma de cada columna)
-    valores_reales = [df_pred[sku].sum() for sku in skus]
-    # El total objetivo es la suma de todos los SKUs, redondeada al entero
-    total_objetivo = round(sum(valores_reales))
+    def obtener_totales_con_transferencia(df, sku_cols):
+        # Diccionario para arrastrar el error de redondeo entre semanas
+        errores_acumulados = {col: 0.0 for col in sku_cols}
+        totales_enteros = {col: 0 for col in sku_cols}
 
-    # 2. Aplicamos Hare-Niemeyer
-    # Paso A: Redondeo hacia abajo (suelos)
-    valores_enteros = [int(x // 1) for x in valores_reales]
-    # Paso B: Calcular cuánto nos falta para llegar al total objetivo
-    diferencia = int(total_objetivo - sum(valores_enteros))
-    # Paso C: Obtener las partes decimales para saber a quién darle las unidades faltantes
-    residuos = [x - (x // 1) for x in valores_reales]
+        for _, row in df.iterrows():
+            for col in sku_cols:
+                # Sumamos valor real + error previo
+                valor_con_error = row[col] + errores_acumulados[col]
+                valor_redondeado = round(valor_con_error)
+                
+                # Actualizamos el total de unidades enteras y el nuevo error
+                totales_enteros[col] += int(valor_redondeado)
+                errores_acumulados[col] = valor_con_error - valor_redondeado
+                
+        return totales_enteros
 
-    # Paso D: Repartir las unidades sobrantes a los residuos más altos
-    # Obtenemos los índices de los residuos ordenados de mayor a menor
-    indices_ordenados = sorted(range(len(residuos)), key=lambda i: residuos[i], reverse=True)
-    for i in range(diferencia):
-        valores_enteros[indices_ordenados[i]] += 1
+    # 1. Calculamos los totales exactos
+    totales_dict = obtener_totales_con_transferencia(df_pred, skus)
 
-    # 3. Formateamos los resultados finales para la tabla (con separador de miles)
-    cantidades_finales = [f"{v:,.0f}" for v in valores_enteros]
-
-    # 4. Construcción del DataFrame para mostrar
-    df_top5_tabla = pd.DataFrame({
+    # 2. Creamos el DataFrame de 2 columnas x 5 filas (+ encabezado)
+    df_top5_resumen = pd.DataFrame({
         'SKU ID': skus,
-        'Cantidad Total Proyectada': cantidades_finales
+        'Cantidad Total Proyectada': [f"{totales_dict[sku]:,.0f}" for sku in skus]
     })
 
-    # Al ser ahora "texto" (por el formato), Streamlit permite centrarlo más fácilmente
+    # 3. Visualización en Streamlit
+    st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
+
     st.dataframe(
-        df_top5_tabla,
+        df_top5_resumen,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "SKU ID": st.column_config.Column(
-                "SKU ID",
-                width="medium",
-            ),
-            "Cantidad Total Proyectada": st.column_config.Column(
-                "Cantidad Total Proyectada",
-                width="medium",
-                help="Suma total proyectada para este SKU",
-            )
+            "SKU ID": st.column_config.Column(width="medium"),
+            "Cantidad Total Proyectada": st.column_config.Column(width="medium")
         }
     )
     # --- SECCIÓN 4: MÉTRICAS DE VALIDACIÓN ---
