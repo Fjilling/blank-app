@@ -81,34 +81,40 @@ with tab1:
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA (CONGRUENCIA GLOBAL) ---
+    # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA (SIN NUMPY) ---
     st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
 
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
 
-    # 1. Calculamos la suma decimal exacta de cada SKU y el total objetivo
+    # 1. Suma decimal exacta y Total Objetivo (basado en la columna TOP5_Total)
     sumas_decimales = [df_pred[sku].sum() for sku in skus]
-    total_objetivo_global = round(df_pred['TOP5_Total'].sum())
+    total_objetivo_global = int(round(df_pred['TOP5_Total'].sum()))
 
-    # 2. Aplicamos Método del Residuo Mayor (Hare-Niemeyer) sobre los totales
-    # Paso A: Suelo (parte entera)
-    valores_enteros = [int(np.floor(s)) for s in sumas_decimales]
-    # Paso B: Diferencia contra el total del modelo
+    # 2. Aplicar Método del Residuo Mayor (Hare-Niemeyer) con Python nativo
+    # Paso A: Obtener la parte entera de cada suma
+    valores_enteros = [int(s) for s in sumas_decimales]
+
+    # Paso B: Calcular la diferencia necesaria para llegar al total
     diferencia = total_objetivo_global - sum(valores_enteros)
-    # Paso C: Residuos decimales
-    residuos = [s - np.floor(s) for s in sumas_decimales]
-    # Paso D: Repartir unidades sobrantes a los decimales más altos
-    indices_residuos = np.argsort(residuos)[::-1]
-    for i in range(int(diferencia)):
-        valores_enteros[indices_residuos[i]] += 1
 
-    # 3. Crear el DataFrame de 2 columnas x 6 filas (incluyendo encabezado)
+    # Paso C: Calcular residuos (la parte decimal)
+    residuos = [s - int(s) for s in sumas_decimales]
+
+    # Paso D: Identificar los índices con los decimales más grandes
+    # Ordenamos los índices de 0 a 4 basándonos en el valor del residuo (de mayor a menor)
+    indices_ordenados = sorted(range(len(residuos)), key=lambda i: residuos[i], reverse=True)
+
+    # Paso E: Repartir las unidades sobrantes
+    for i in range(int(diferencia)):
+        valores_enteros[indices_ordenados[i]] += 1
+
+    # 3. Construcción del DataFrame (2 columnas x 6 filas)
     df_top5_resumen = pd.DataFrame({
         'SKU ID': skus,
-        'Cantidad Total Proyectada': [f"{v:,.0f}" for v in valores_enteros]
+        'Cantidad Total Proyectada': [f"{v:,}" for v in valores_enteros]
     })
 
-    # 4. Visualización limpia en Streamlit
+    # 4. Mostrar tabla en Streamlit
     st.dataframe(
         df_top5_resumen,
         use_container_width=True,
