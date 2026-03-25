@@ -7,7 +7,7 @@ import os
 
 # Configuración de la página
 st.set_page_config(
-    page_title='Sistema de Proyección de Demanda',
+    page_title='Analítica de negocio',
         page_icon=':chart_with_upwards_trend:', # This is an emoji shortcode. Could be a URL too.
         )
 
@@ -64,7 +64,7 @@ with tab1:
     f_max_str = f"{fecha_max.day} de {meses[fecha_max.month]} {fecha_max.year}"
 
     # Mostramos el mensaje final
-    st.info(f"📅 **Predicción desde:** {f_min_str}, **hasta:** {f_max_str} ({semanas_totales} semanas totales)")
+    st.info(f"📅 Predicción desde: **{f_min_str}**, hasta: **{f_max_str}** ({semanas_totales} semanas totales)")
 
     # --- SECCIÓN 2: DEMANDA PROYECTADA: GRÁFICO ---
     st.subheader("DEMANDA PROYECTADA")
@@ -126,7 +126,7 @@ with tab2:
     powerbi_iframe = """
     <iframe title="Dashboard Tesis" 
             width="100%" 
-            height="650" 
+            height="500" 
             src="https://app.powerbi.com/view?r=eyJrIjoiYWE5NjBiNWMtNGYyMi00ODQxLTg1YTEtZjY1NmMzZTQ0ZWEzIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9" 
             frameborder="0" 
             allowFullScreen="true">
@@ -134,4 +134,4 @@ with tab2:
     """
     
     # El height aquí debe ser un poco mayor al del iframe para evitar scrolls dobles
-    components.html(powerbi_iframe, height=700, scrolling=True)
+    components.html(powerbi_iframe, height=550, scrolling=True)
