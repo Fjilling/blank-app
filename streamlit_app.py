@@ -8,7 +8,7 @@ import os
 # Configuración de la página
 st.set_page_config(
     page_title='Sistema de Proyección de Demanda',
-        page_icon=':📈:', # This is an emoji shortcode. Could be a URL too.
+        page_icon=':chart_with_upwards_trend:', # This is an emoji shortcode. Could be a URL too.
         )
 
 
@@ -40,15 +40,34 @@ df_hist, df_pred = load_data()
 tab1, tab2 = st.tabs(["PRONÓSTICO", "DASHBOARD ESTRATÉGICO"])
 
 with tab1:
-    st.header("SISTEMA DE PROYECCIÓN DE DEMANDA")
+    st.header("PROYECCIÓN DE DEMANDA")
 
-    # --- SECCIÓN 1: CONFIGURACIÓN DEL HORIZONTE ---
+    # --- 1. FECHAS DEL PRONÓSTICO DE DEMANDA ---
+    # Extraemos fechas límite
+    fecha_min = df_pred['Semana'].min()
     fecha_max = df_pred['Semana'].max()
-    st.subheader("1. CONFIGURACIÓN DEL HORIZONTE")
-    st.info(f"Fecha final de predicción: {fecha_max.strftime('%d de %B %Y')}")
 
-    # --- SECCIÓN 2: SERIE TEMPORAL ---
-    st.subheader("2. SERIE TEMPORAL: DEMANDA PROYECTADA")
+    # Calculamos el número de semanas totales
+    # Usamos .days // 7 para obtener el número entero de semanas
+    semanas_totales = (fecha_max - fecha_min).days // 7 + 1 
+
+    st.subheader("FECHAS DEL PRONÓSTICO DE DEMANDA")
+
+    # Diccionario para meses en español (opcional, para asegurar el idioma)
+    meses = {
+        1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio",
+        7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"
+    }
+
+    # Formateamos las cadenas de fecha
+    f_min_str = f"{fecha_min.day} de {meses[fecha_min.month]} {fecha_min.year}"
+    f_max_str = f"{fecha_max.day} de {meses[fecha_max.month]} {fecha_max.year}"
+
+    # Mostramos el mensaje final
+    st.info(f"📅 **Predicción desde:** {f_min_str}, **hasta:** {f_max_str} ({semanas_totales} semanas totales)")
+
+    # --- SECCIÓN 2: DEMANDA PROYECTADA: GRÁFICO ---
+    st.subheader("DEMANDA PROYECTADA")
     
     fig, ax = plt.subplots(figsize=(10, 4))
     # Histórico (Fuente 1)
@@ -63,11 +82,11 @@ with tab1:
     st.pyplot(fig)
 
     # 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA
-    st.subheader("3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
+    st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
 
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
     # Formateamos los números como texto con 2 decimales y separador de miles
-    cantidades = [f"{df_pred[sku].sum():,.2f}" for sku in skus]
+    cantidades = [f"{round(df_pred[sku].sum()):,.0f}" for sku in skus]
 
     df_top5_tabla = pd.DataFrame({
         'SKU ID': skus,
@@ -93,20 +112,12 @@ with tab1:
     )
     # --- SECCIÓN 4: MÉTRICAS DE VALIDACIÓN ---
     st.markdown("---")
-    st.subheader("4. MÉTRICAS DE VALIDACIÓN DEL MODELO (Backtesting)")
-    
-    col1, col2 = st.columns(2)
+    st.subheader("VALIDACIÓN DEL MODELO DE PREDICCIÓN")
     
     # Confianza: Promedio de WAPE_TopDown_Total
-    confianza_promedio = df_pred['WAPE_TopDown_Total'].mean()
+    confianza_neta = 1 - df_pred['WAPE_TopDown_Total'].mean()
     
-    with col1:
-        st.metric(label="CONFIANZA DEL PRONÓSTICO", value=f"{confianza_promedio:.2%}")
-        st.caption("Basado en el WAPE de la predicción")
-        
-    with col2:
-        st.metric(label="SESGO DEL PRONÓSTICO", value="NA")
-        st.caption("Datos todavía no disponibles")
+    st.metric(label="CONFIANZA EN EL PRONÓSTICO", value=f"{confianza_neta:.2%}")
 
 with tab2:
     # --- SECCIÓN: POWER BI (Nuevo Enlace) ---
@@ -115,7 +126,7 @@ with tab2:
     powerbi_iframe = """
     <iframe title="Dashboard Tesis" 
             width="100%" 
-            height="500" 
+            height="650" 
             src="https://app.powerbi.com/view?r=eyJrIjoiYWE5NjBiNWMtNGYyMi00ODQxLTg1YTEtZjY1NmMzZTQ0ZWEzIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9" 
             frameborder="0" 
             allowFullScreen="true">
@@ -123,4 +134,4 @@ with tab2:
     """
     
     # El height aquí debe ser un poco mayor al del iframe para evitar scrolls dobles
-    components.html(powerbi_iframe, height=550, scrolling=True)
+    components.html(powerbi_iframe, height=700, scrolling=True)
