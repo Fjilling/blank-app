@@ -81,37 +81,23 @@ with tab1:
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA (CORRECCIÓN SIN ROUND) ---
+    # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA (LECTURA DIRECTA) ---
     st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
 
+    # Definimos los SKUs que queremos mostrar
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
 
-    # 1. Obtenemos las sumas decimales exactas
-    sumas_decimales = [df_pred[sku].sum() for sku in skus]
-    
-    # 2. DEFINIMOS EL TOTAL OBJETIVO MANUALMENTE BASADO EN TU LÓGICA
-    # Si sumamos 42+52+72+55+49, el total debe ser 270.
-    # Forzamos este total para que el algoritmo de residuo reparta las unidades hasta llegar a él.
-    total_objetivo = 270 
+    # 1. Obtenemos las sumas directamente del DataFrame que ya procesamos (df_predict)
+    # Como ya aplicamos la transferencia de residuo, estos ya son enteros.
+    sumas_finales = [df_predict[sku].sum() for sku in skus]
 
-    # 3. Aplicamos Residuo Mayor Manual
-    valores_enteros = [int(s) for s in sumas_decimales]
-    faltante = total_objetivo - sum(valores_enteros)
-    residuos = [s - int(s) for s in sumas_decimales]
-    
-    # Ordenamos índices de mayor a menor residuo
-    indices_prioridad = sorted(range(len(residuos)), key=lambda i: residuos[i], reverse=True)
-    
-    # Repartimos las unidades hasta completar las 270
-    for i in range(faltante):
-        valores_enteros[indices_prioridad[i]] += 1
-
-    # 4. Construcción del DataFrame Final
+    # 2. Construcción del DataFrame para Visualización
     df_top5_resumen = pd.DataFrame({
         'SKU ID': skus,
-        'Cantidad Total Proyectada': [f"{v:,}" for v in valores_enteros]
+        'Cantidad Total Proyectada': [f"{int(v):,}" for v in sumas_finales]
     })
 
+    # 3. Mostrar en Streamlit
     st.dataframe(
         df_top5_resumen,
         use_container_width=True,
