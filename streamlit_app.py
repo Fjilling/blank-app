@@ -81,47 +81,29 @@ with tab1:
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA (CON CONGRUENCIA) ---
+    # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA ---
     st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
 
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
 
-    def obtener_totales_con_transferencia(df, sku_cols):
-        # Diccionario para arrastrar el error de redondeo entre semanas
-        errores_acumulados = {col: 0.0 for col in sku_cols}
-        totales_enteros = {col: 0 for col in sku_cols}
-
-        for _, row in df.iterrows():
-            for col in sku_cols:
-                # Sumamos valor real + error previo
-                valor_con_error = row[col] + errores_acumulados[col]
-                valor_redondeado = round(valor_con_error)
-                
-                # Actualizamos el total de unidades enteras y el nuevo error
-                totales_enteros[col] += int(valor_redondeado)
-                errores_acumulados[col] = valor_con_error - valor_redondeado
-                
-        return totales_enteros
-
-    # 1. Calculamos los totales exactos
-    totales_dict = obtener_totales_con_transferencia(df_pred, skus)
+    # 1. Calculamos los totales sumando los decimales reales y redondeando al final
+    # Esto evita que se pierdan unidades por el arrastre semanal en el resumen global
+    cantidades_redondeadas = [f"{round(df_pred[sku].sum()):,.0f}" for sku in skus]
 
     # 2. Creamos el DataFrame de 2 columnas x 5 filas (+ encabezado)
     df_top5_resumen = pd.DataFrame({
         'SKU ID': skus,
-        'Cantidad Total Proyectada': [f"{totales_dict[sku]:,.0f}" for sku in skus]
+        'Cantidad Total Proyectada': cantidades_redondeadas
     })
 
     # 3. Visualización en Streamlit
-    st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
-
     st.dataframe(
         df_top5_resumen,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "SKU ID": st.column_config.Column(width="medium"),
-            "Cantidad Total Proyectada": st.column_config.Column(width="medium")
+            "SKU ID": st.column_config.Column("SKU ID", width="medium"),
+            "Cantidad Total Proyectada": st.column_config.Column("Cantidad Total Proyectada", width="medium")
         }
     )
     # --- SECCIÓN 4: MÉTRICAS DE VALIDACIÓN ---
