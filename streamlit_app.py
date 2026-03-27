@@ -82,7 +82,7 @@ with tab1:
     st.pyplot(fig)
 
     # --- 3. TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA (LECTURA DIRECTA) ---
-    st.subheader("TOP 5 SKUs CON MAYOR DEMANDA PROYECTADA")
+    st.subheader("PROYECCIÓN DE DEMANADA PARA TOP 5 SKUs")
 
     # Definimos los SKUs que queremos mostrar
     skus = ['ISD-007T-0006', 'ISD-007T-0007', 'ISD-007T-0008', 'ISD-007T-0009', 'ISD-007T-0010']
