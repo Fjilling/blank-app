@@ -124,7 +124,7 @@ with tab2:
     <iframe title="Dashboard Tesis" 
             width="100%" 
             height="500" 
-            src="https://app.powerbi.com/view?r=eyJrIjoiYWE5NjBiNWMtNGYyMi00ODQxLTg1YTEtZjY1NmMzZTQ0ZWEzIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9" 
+            src="https://app.powerbi.com/view?r=eyJrIjoiY2RmNTUzYzctYTc5OS00MGY5LTlkMjktMTY2ZGViZGE5ZWRkIiwidCI6ImI3YWY4Y2FmLTgzZDgtNDY0NC04NWFlLTMxN2M1NDUyMjNjMSIsImMiOjR9" 
             frameborder="0" 
             allowFullScreen="true">
     </iframe>
